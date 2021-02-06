@@ -1,4 +1,5 @@
 import { Request } from "../server";
+import qs from "query-string";
 
 interface IParser {
   parse: (input: any) => any;
@@ -51,3 +52,11 @@ class TextParser extends ParserChain {
 
 export const parsers = new JsonParser();
 parsers.setNext(new TextParser());
+
+class QueryParser implements IParser {
+  parse(query: string): object {
+    return qs.parse(query);
+  }
+}
+
+export { QueryParser };
