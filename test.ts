@@ -21,10 +21,13 @@ class MyGreetJsonHandler extends RequestHandler {
 }
 
 const router = new ComplexRouter();
+const groupRouter = new ComplexRouter();
 
+groupRouter.set(Method.GET, "/:id", new MyGreetHandler());
 router.set(Method.GET, "/:id", new MyGreetHandler());
 router.set(Method.GET, "/:id/json", new MyGreetJsonHandler());
 
-server.use("/users", router);
+server.setRouter("/users", router);
+server.setRouter("/groups", groupRouter);
 
 server.listen(3001, () => console.log(`server is listening on port ${3001}`));

@@ -1,4 +1,5 @@
 import { Method } from "../constants";
+import { Errors } from "../error";
 import { Request, Response } from "../server/index";
 
 type Next = (req: Request, res: Response) => void;
@@ -16,14 +17,14 @@ abstract class RequestHandler {
   }
 
   get path() {
-    if (!this._path) throw new Error("null");
+    if (!this._path) throw new Errors.UndefinedRefrenceError("path");
     return this._path;
   }
   set path(path: string) {
     this._path = path;
   }
   get method() {
-    if (!this._method) throw new Error("null");
+    if (!this._method) throw new Errors.UndefinedRefrenceError("method");
     return this._method;
   }
   set method(method: Method) {

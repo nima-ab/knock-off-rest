@@ -4,7 +4,7 @@ import { match } from "path-to-regexp";
 import { Method } from "../constants";
 import { Request, Response } from "../server";
 import { QueryParser } from "../parsers/parser";
-
+import { Errors } from "../error";
 interface IRouter {
   path?: string;
   set: (method: Method, path: string, handler: RequestHandler) => void;
@@ -31,7 +31,7 @@ class PatternMachingRouterWrapper implements IRouterWrapper {
       if (router.path === path) return router;
     }
 
-    throw new Error("Not Found");
+    throw new Errors.NotFoundError(`No router found for ${path}`);
   }
 
   set(path: string, router: IRouter): void {
@@ -50,7 +50,7 @@ class PatternMachingRouterWrapper implements IRouterWrapper {
       return;
     }
 
-    throw new Error("Not Found");
+    throw new Errors.NotFoundError(`No router found for ${req.request.url}`);
   }
 }
 class SingleRouterWrapper implements IRouterWrapper {
@@ -58,14 +58,14 @@ class SingleRouterWrapper implements IRouterWrapper {
   path?: string;
   constructor() {}
   set(path: string, router: IRouter): void {
-    throw new Error("not implemented");
+    throw new Errors.NotImplementedError();
   }
   route(req: Request, res: Response): void {
-    throw new Error("not implemented");
+    throw new Errors.NotImplementedError();
   }
 
   get(path: string): IRouter {
-    throw new Error("not implemented");
+    throw new Errors.NotImplementedError();
   }
 }
 
@@ -82,7 +82,8 @@ class SimpleRouter implements IRouter {
   route(req: Request, res: Response): void {
     const path = req.request.url!;
 
-    if (!this.handlers.has(path)) throw new Error("null");
+    if (!this.handlers.has(path))
+      throw new Errors.UndefinedRefrenceError("path");
     this.handlers.get(path)?.handle(req, res);
   }
 }
@@ -116,7 +117,7 @@ class ComplexRouter implements IRouter {
       if (!parsed) continue;
 
       if (method !== handler.method)
-        throw new Error(`Cannot ${method} ${this.path!.concat(path)}`);
+        throw new Errors.InvalidMethodError(method, req.request.url!);
 
       req.params = parsed.params;
       if (query) {
@@ -126,7 +127,7 @@ class ComplexRouter implements IRouter {
       return handler.handle(req, res);
     }
 
-    throw new Error("Not Found");
+    throw new Errors.NotFoundError(`No handler found for ${path}`);
   }
 }
 
@@ -138,12 +139,3 @@ export {
   SingleRouterWrapper,
   ComplexRouter,
 };
-
-// const matcher = match("/users");
-// const split = "/users?type=a&b=c".split("?");
-
-// const path = split[0];
-// const query = split[1];
-
-// console.log(query);
-// console.log(matcher(path));

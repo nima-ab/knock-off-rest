@@ -1,5 +1,6 @@
 import { Request } from "../server";
 import qs from "query-string";
+import { Errors } from "../error";
 
 interface IParser {
   parse: (input: any) => any;
@@ -10,7 +11,7 @@ abstract class ParserChain implements IParser {
   abstract contentType: string;
 
   get parser() {
-    if (!this.nextParser) throw new Error("null");
+    if (!this.nextParser) throw new Errors.UndefinedRefrenceError("nextParser");
 
     return this.nextParser;
   }

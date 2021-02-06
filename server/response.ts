@@ -8,6 +8,11 @@ export class Response {
     this.response = res;
   }
 
+  status(status: number): Response {
+    this.response.statusCode = status;
+    return this;
+  }
+
   send(data: any) {
     if (typeof data === "object") {
       this.response.setHeader("content-type", "application/json");
