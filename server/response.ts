@@ -14,6 +14,8 @@ export class Response {
   }
 
   send(data: any) {
+    // console.log('sending some bullshit');
+    // console.log(typeof data);
     if (typeof data === "object") {
       this.response.setHeader("content-type", "application/json");
       this.response.write(new JsonSerializer().serialize(data));

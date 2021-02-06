@@ -44,6 +44,7 @@ abstract class RequestHandler {
 class HandlerBuilder {
   private handler: RequestHandler;
   private temp: RequestHandler;
+  
   constructor(handler: RequestHandler) {
     this.handler = handler;
     this.temp = handler;

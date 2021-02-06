@@ -1,4 +1,5 @@
 import { Method } from "../constants";
+import { ValidationError as JoiValidationError } from 'joi';
 
 export namespace Errors {
   export class NotImplementedError extends Error {
@@ -24,6 +25,16 @@ export namespace Errors {
       return {
         message: this.message,
       };
+    }
+  }
+
+  export class ValidationError extends HttpErrorBase {
+    status = 400;
+    
+    constructor(public error: JoiValidationError) {
+      super('Invalid request body or parameters!!!');
+
+      Object.setPrototypeOf(this, ValidationError.prototype);
     }
   }
 
