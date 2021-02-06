@@ -53,9 +53,6 @@ export class Server {
     server.listen(port);
   }
 
-  // set(method: Method, path: string, handler: RequestHandler) {
-  //   this.routerWrapper.get("/").set(method, path, handler);
-  // }
   use(path: string, router: IRouter) {
     this.routerWrapper.set(path, router);
   }
