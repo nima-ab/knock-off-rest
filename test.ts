@@ -3,11 +3,10 @@ import { StaticFileServer } from "./middlewares";
 import { ComplexRouter, RequestHandler } from "./router";
 import { Server, Request, Response } from "./server";
 import path from "path";
+import joi from "joi";
+import { ValidationHandler } from "./middlewares/validation-handler";
 
 const server = new Server();
-server.setRequestInterceptor(
-  new StaticFileServer(path.join(__dirname, "public"))
-);
 
 class MyGreetHandler extends RequestHandler {
   handle(req: Request, res: Response): void {
@@ -22,6 +21,8 @@ class MyGreetJsonHandler extends RequestHandler {
     res.send({
       id: req.params.id,
     });
+
+    this.next(req, res);
   }
 }
 class MyHandler extends RequestHandler {
@@ -31,19 +32,22 @@ class MyHandler extends RequestHandler {
   }
 }
 
-const router = new ComplexRouter();
+const schema = joi.object({
+  name: joi.string(),
+  password: joi.string().required(),
+});
+
 const groupRouter = new ComplexRouter();
 
-groupRouter.set(
-  Method.POST,
-  "/:id",
-  RequestHandler.builder(new MyHandler()).set(new MyGreetHandler()).build()
-);
+// show how the builder works and why it is that way
+// const handler = RequestHandler.builder(new ValidationHandler(schema))
+//   .set(new MyGreetHandler())
+//   .build();
 
-router.set(Method.GET, "/:id", new MyGreetHandler());
-router.set(Method.GET, "/:id/json", new MyGreetJsonHandler());
+// console.log(typeof handler);
 
-server.setRouter("/users", router);
-server.setRouter("/groups", groupRouter);
+import { router as userRouter } from "./test/user-router";
+
+server.setRouter("/users", userRouter);
 
 server.listen(3001, () => console.log(`server is listening on port ${3001}`));

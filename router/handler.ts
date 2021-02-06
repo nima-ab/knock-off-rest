@@ -1,5 +1,5 @@
 import { Method } from "../constants";
-import { Errors } from "../error";
+import { UndefinedRefrenceError } from "../error";
 import { Request, Response } from "../server";
 
 type Next = (req: Request, res: Response) => void;
@@ -12,21 +12,20 @@ abstract class RequestHandler {
 
   constructor() {
     this.next = (req: Request, res: Response) => {
-      if (!this.nextHandler)
-        throw new Errors.UndefinedRefrenceError("nextHandler");
+      if (!this.nextHandler) throw new UndefinedRefrenceError("nextHandler");
       return this.nextHandler.handle(req, res);
     };
   }
 
   get path() {
-    if (!this._path) throw new Errors.UndefinedRefrenceError("path");
+    if (!this._path) throw new UndefinedRefrenceError("path");
     return this._path;
   }
   set path(path: string) {
     this._path = path;
   }
   get method() {
-    if (!this._method) throw new Errors.UndefinedRefrenceError("method");
+    if (!this._method) throw new UndefinedRefrenceError("method");
     return this._method;
   }
   set method(method: Method) {
@@ -46,6 +45,7 @@ abstract class RequestHandler {
 class HandlerBuilder {
   private handler: RequestHandler;
   private temp: RequestHandler;
+
   constructor(handler: RequestHandler) {
     this.handler = handler;
     this.temp = handler;

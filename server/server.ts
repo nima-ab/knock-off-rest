@@ -1,5 +1,5 @@
 import http from "http";
-import { ErrorHandling } from "../error";
+import { DefaultErrorHandler, IErrorHandler } from "../error";
 import { StaticFileServer } from "../middlewares";
 import {
   IRouter,
@@ -11,24 +11,22 @@ import { Request, Response } from "./index";
 
 export class Server {
   routerWrapper: IRouterWrapper;
-  errorHandler: ErrorHandling.IErrorHandler;
-  requestInterceptors: RequestHandler[];
+  errorHandler: IErrorHandler;
+  staticFileServer?: StaticFileServer;
   constructor(
     routerWrapper?: IRouterWrapper,
-    errorHandler?: ErrorHandling.IErrorHandler
+    errorHandler?: IErrorHandler,
+    staticFileServer?: StaticFileServer
   ) {
     this.routerWrapper = routerWrapper
       ? routerWrapper
       : new PatternMachingRouterWrapper();
 
-    this.errorHandler = errorHandler
-      ? errorHandler
-      : new ErrorHandling.DefaultErrorHandler();
+    this.errorHandler = errorHandler ? errorHandler : new DefaultErrorHandler();
 
-    this.requestInterceptors = [];
-
-    // this.fileServer = fileServer ? fileServer : undefined;
-    // if (this.fileServer) this.fileServer.router = this.routerWrapper;
+    this.staticFileServer = staticFileServer ? staticFileServer : undefined;
+    if (this.staticFileServer)
+      this.staticFileServer.router = this.routerWrapper;
   }
 
   listen(port: number, onConnection?: () => void) {
@@ -36,9 +34,8 @@ export class Server {
       const request = new Request(req);
       const response = new Response(res);
       try {
-        // for (const interceptor of this.requestInterceptors) {
-        //   await interceptor.handle(request, response);
-        // }
+        if (this.staticFileServer)
+          await this.staticFileServer?.handle(request, response);
 
         if (!req.headers["content-type"]) {
           // we don't have content type so we can
@@ -55,8 +52,12 @@ export class Server {
         // when the body arives
 
         req.on("data", (data) => {
-          request.rawData = data;
-          this.routerWrapper.route(request, response);
+          try {
+            request.rawData = data;
+            this.routerWrapper.route(request, response);
+          } catch (error) {
+            this.errorHandler.handle(error, request, response);
+          }
         });
       } catch (error) {
         this.errorHandler.handle(error, request, response);
@@ -75,14 +76,7 @@ export class Server {
   setRouter(path: string, router: IRouter) {
     this.routerWrapper.set(path, router);
   }
-  setErrorHandler(errorHandler: ErrorHandling.IErrorHandler) {
+  setErrorHandler(errorHandler: IErrorHandler) {
     this.errorHandler = errorHandler;
   }
-
-  setRequestInterceptor(requestHandler: RequestHandler) {
-    this.requestInterceptors.push(requestHandler);
-  }
-  // setErrorHandler(errorHandler: ErrorHandling.IErrorHandler) {
-  //   this.errorHandler = errorHandler;
-  // }
 }

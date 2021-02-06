@@ -12,7 +12,6 @@ export class Request {
   }
 
   set rawData(data: any) {
-    console.log("hello");
     this._rawData = data;
     this.body = parsers.parse(data);
   }
