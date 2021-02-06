@@ -1,5 +1,5 @@
 import { Method } from "./constants";
-import { RequestHandler } from "./router";
+import { ComplexRouter, RequestHandler } from "./router";
 import { Server, Request, Response } from "./server";
 const server = new Server();
 
@@ -7,7 +7,7 @@ class MyGreetHandler extends RequestHandler {
   handle(req: Request, res: Response): void {
     console.log("handled a request");
     console.log("request body: ", req.body);
-    res.send("helllo");
+    res.send(req.params.id);
   }
 }
 class MyGreetJsonHandler extends RequestHandler {
@@ -15,15 +15,16 @@ class MyGreetJsonHandler extends RequestHandler {
     console.log("handled a request");
     console.log("request body: ", req.body);
     res.send({
-      message: "hello",
+      id: req.params.id,
     });
   }
 }
 
-const greet = new MyGreetHandler();
-const greetJson = new MyGreetJsonHandler();
+const router = new ComplexRouter();
 
-server.set(Method.GET, "/greet", greet);
-server.set(Method.GET, "/greet/json", greetJson);
+router.set(Method.GET, "/:id", new MyGreetHandler());
+router.set(Method.GET, "/:id/json", new MyGreetJsonHandler());
 
-server.listen(3001);
+server.use("/users", router);
+
+server.listen(3001, () => console.log(`server is listening on port ${3001}`));

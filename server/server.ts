@@ -6,26 +6,41 @@ import {
   RequestHandler,
   Next,
   DefaultErrorHandler,
-} from "../router/index";
+  IRouterWrapper,
+  PatternMachingRouterWrapper,
+  ComplexRouter,
+} from "../router";
 import { Request, Response } from "./index";
 
 export class Server {
-  routers: Map<string, IRouter>;
-  constructor() {
-    this.routers = new Map<string, IRouter>();
-    this.routers.set("/", new SimpleRouter());
+  routerWrapper: IRouterWrapper;
+  constructor(routerWrapper?: IRouterWrapper) {
+    this.routerWrapper = routerWrapper
+      ? routerWrapper
+      : new PatternMachingRouterWrapper();
   }
 
   listen(port: number, onConnection?: () => void) {
     const server = http.createServer((req, res) => {
-      const routerPath = req.url?.substring(0, 1);
-      const handlerPath = req.url?.substring(1, req.url?.length);
-      const method = req.method?.toLowerCase() as Method;
-      const handler = this.routers
-        .get(routerPath!)
-        ?.route(method.concat(handlerPath!));
+      const request = new Request(req);
+      const response = new Response(res);
+      if (!req.headers["content-encoding"]) {
+        // we don't have content type so we can
+        // assume no content has been sent
+        // so don't add a data listener
+        return this.routerWrapper.route(request, response);
+      } else if (!req.headers["content-length"]) {
+        // we have content type but there is no length
+        // so don't add a data listerner
+        return this.routerWrapper.route(request, response);
+      }
+
+      // if the headers for body is defined handle the request
+      // when the body arives
+
       req.on("data", (data) => {
-        handler?.handle(new Request(req, data), new Response(res));
+        request.rawData = data;
+        this.routerWrapper.route(request, response);
       });
 
       req.on("error", (error) => {
@@ -33,15 +48,12 @@ export class Server {
       });
     });
 
-    if (onConnection) server.on("connection", onConnection);
+    if (onConnection) server.on("listening", onConnection);
 
     server.listen(port);
   }
 
-  set(method: Method, path: string, handler: RequestHandler) {
-    console.log(method.concat(path.substring(1, path.length)));
-    this.routers
-      .get(path.substring(0, 1))
-      ?.set(method.concat(path.substring(1, path.length)), handler);
+  use(path: string, router: IRouter) {
+    this.routerWrapper.set(path, router);
   }
 }
