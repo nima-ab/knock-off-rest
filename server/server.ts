@@ -1,20 +1,18 @@
 import http from "http";
-import { Method } from "../constants";
 import { ErrorHandling } from "../error";
+import { StaticFileServer } from "../middlewares";
 import {
   IRouter,
-  SimpleRouter,
   RequestHandler,
-  Next,
   IRouterWrapper,
   PatternMachingRouterWrapper,
-  ComplexRouter,
 } from "../router";
 import { Request, Response } from "./index";
 
 export class Server {
   routerWrapper: IRouterWrapper;
   errorHandler: ErrorHandling.IErrorHandler;
+  requestInterceptors: RequestHandler[];
   constructor(
     routerWrapper?: IRouterWrapper,
     errorHandler?: ErrorHandling.IErrorHandler
@@ -26,14 +24,23 @@ export class Server {
     this.errorHandler = errorHandler
       ? errorHandler
       : new ErrorHandling.DefaultErrorHandler();
+
+    this.requestInterceptors = [];
+
+    // this.fileServer = fileServer ? fileServer : undefined;
+    // if (this.fileServer) this.fileServer.router = this.routerWrapper;
   }
 
   listen(port: number, onConnection?: () => void) {
-    const server = http.createServer((req, res) => {
+    const server = http.createServer(async (req, res) => {
       const request = new Request(req);
       const response = new Response(res);
       try {
-        if (!req.headers["content-encoding"]) {
+        // for (const interceptor of this.requestInterceptors) {
+        //   await interceptor.handle(request, response);
+        // }
+
+        if (!req.headers["content-type"]) {
           // we don't have content type so we can
           // assume no content has been sent
           // so don't add a data listener
@@ -71,4 +78,11 @@ export class Server {
   setErrorHandler(errorHandler: ErrorHandling.IErrorHandler) {
     this.errorHandler = errorHandler;
   }
+
+  setRequestInterceptor(requestHandler: RequestHandler) {
+    this.requestInterceptors.push(requestHandler);
+  }
+  // setErrorHandler(errorHandler: ErrorHandling.IErrorHandler) {
+  //   this.errorHandler = errorHandler;
+  // }
 }

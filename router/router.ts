@@ -121,7 +121,7 @@ class ComplexRouter implements IRouter {
 
       req.params = parsed.params;
       if (query) {
-        req.query = new QueryParser();
+        req.query = new QueryParser().parse(query);
         req.querystr = query;
       }
       return handler.handle(req, res);

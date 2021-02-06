@@ -1,6 +1,6 @@
 import { Method } from "../constants";
 import { Errors } from "../error";
-import { Request, Response } from "../server/index";
+import { Request, Response } from "../server";
 
 type Next = (req: Request, res: Response) => void;
 
@@ -12,7 +12,9 @@ abstract class RequestHandler {
 
   constructor() {
     this.next = (req: Request, res: Response) => {
-      return this.nextHandler?.handle(req, res);
+      if (!this.nextHandler)
+        throw new Errors.UndefinedRefrenceError("nextHandler");
+      return this.nextHandler.handle(req, res);
     };
   }
 
