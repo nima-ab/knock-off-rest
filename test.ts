@@ -1,10 +1,12 @@
 import { ComplexRouter } from "./router";
 import { Server } from "./server";
+import { StaticFileServer } from "./middlewares";
+import { router as userRouter } from "./test/user-router";
 import joi from "joi";
 
-const server = new Server();
+const serverfile = new StaticFileServer("./public")
+const server = new Server(undefined, undefined, serverfile);
 
-import { router as userRouter } from "./test/user-router";
 
 server.setRouter("/users", userRouter);
 

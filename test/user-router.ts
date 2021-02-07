@@ -5,6 +5,7 @@ import { NotFoundError } from "../error";
 import { ValidationHandler } from "../middlewares/validation-handler";
 import { ComplexRouter, RequestHandler } from "../router";
 import { Request, Response } from "../server";
+import {User} from "../db";
 
 const router = new ComplexRouter();
 const users = [
@@ -34,28 +35,33 @@ const users = [
   },
 ];
 
+const userdb: User[] = []
+for (const iterator of users) {
+  userdb.push(new User(iterator.name, iterator.email, iterator.id))
+}
+
 class GetUserHandler extends RequestHandler {
   handle(req: Request, res: Response): void {
     let user = undefined;
 
-    for (const u of users) {
-      if (u.id === req.params?.id) user = u;
+    for (const u of userdb) {
+      if (u.getProps("id") === req.params?.id) user = u;
     }
 
     if (!user)
       throw new NotFoundError("Didn't find any user with the given id!");
 
-    res.send(user);
+    res.send(user.toObject());
   }
 }
 class GetUsersHandler extends RequestHandler {
   handle(req: Request, res: Response): void {
-    res.send(users);
+    res.send([...userdb.map(u => u.toObject())]);
   }
 }
 const schema = Joi.object({
   name: Joi.string().required(),
-  pass: Joi.string().required().min(6).max(16),
+  // pass: Joi.string().required().min(6).max(16),
   email: Joi.string().email(),
 });
 
@@ -63,16 +69,13 @@ class SignupUserHandler extends RequestHandler {
   private id: number;
   constructor() {
     super();
-    this.id = users.length;
+    this.id = userdb.length;
   }
   handle(req: Request, res: Response): void {
-    const user = {
-      ...req.body,
-      id: `${++this.id}`,
-    };
-    users.push(user);
+    const user =new User(req.body.name, req.body.email, `${++this.id}`)
+    userdb.push(user);
 
-    res.status(201).send(user);
+    res.status(201).send(user.toObject());
   }
 }
 
